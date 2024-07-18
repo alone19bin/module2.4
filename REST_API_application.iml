@@ -8,7 +8,9 @@
   <component name="FacetManager">
     <facet type="hibernate" name="Hibernate">
       <configuration>
-        <datasource-map />
+        <datasource-map>
+          <unit-entry name="db:migration:hibernate.cfg.xml" value="90961418-81bd-47b3-877e-b56c11f0378e" />
+        </datasource-map>
         <naming-strategy-map />
         <deploymentDescriptor name="hibernate.cfg.xml" url="file://$MODULE_DIR$/src/main/resources/db/migration/hibernate.cfg.xml" />
       </configuration>

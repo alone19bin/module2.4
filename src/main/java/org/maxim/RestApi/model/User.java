@@ -24,6 +24,7 @@ public class User {
     @Expose
     private String name;
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    @Expose
     private List<Event> events;
 
     @Override

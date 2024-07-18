@@ -27,9 +27,11 @@ public class Event {
     private LocalDateTime created;
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @Expose
     private User user;
     @ManyToOne
     @JoinColumn(name = "file_id")
+    @Expose
     private UFile uFile;
 
 

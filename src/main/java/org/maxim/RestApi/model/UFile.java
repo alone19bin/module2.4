@@ -24,6 +24,7 @@ public class UFile {
     @Expose
     private String name;
     @Column(name = "file_path")
+    @Expose
     private String filePath;
     @OneToMany(mappedBy = "uFile", fetch = FetchType.LAZY)
     private List<Event> events;

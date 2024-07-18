@@ -1,0 +1,9 @@
+----------------------------106116712811633488888743
+Content-Disposition: form-data; name="file"; filename="application.json"
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "application.json"
+}
+----------------------------106116712811633488888743--

@@ -2,6 +2,7 @@ package org.maxim.RestApi.Controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.maxim.RestApi.DTO.FileDTO;
 import org.maxim.RestApi.model.Event;
 import org.maxim.RestApi.model.UFile;
 import org.maxim.RestApi.service.FileService;
@@ -25,30 +26,36 @@ public class FileControllerV1 extends HttpServlet {
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter writer = response.getWriter();
         String requestURI = request.getRequestURI();
-        String substring = requestURI.substring(requestURI.lastIndexOf("/") +1);
+        String substring = requestURI.substring(requestURI.lastIndexOf("/") + 1);
 
         if (!substring.isEmpty()) {
-            int id = Integer.parseInt(substring);
-            UFile file = fileService.getFile(id);
-            writer.println(gson.toJson(file));
+            try {
+                int id = Integer.parseInt(substring);
+                FileDTO file = fileService.getFile(id);
+                String json = gson.toJson(file);
+                writer.println(json);
+            } catch (NumberFormatException e) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                writer.println("error Invalid file ID");
+            }
         } else {
-            List<UFile> allFiles;
-            allFiles = fileService.getAll();
-            writer.println(gson.toJson(allFiles));
+            List<FileDTO> allFiles = fileService.getAll();
+            String json = gson.toJson(allFiles);
+            writer.println(json);
         }
+        writer.close();
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        log("пришел запрос на загрузку файла ");
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         File filePath = new File("src/main/resources/files");
-
         if (!filePath.exists()) {
             filePath.mkdirs();
         }
@@ -66,79 +73,26 @@ public class FileControllerV1 extends HttpServlet {
             exception.printStackTrace();
         }
 
-        UFile savedFile = fileService.addFile(file, req);
+        FileDTO savedFile = fileService.addFile(file, req);
+        String json = gson.toJson(savedFile);
         PrintWriter writer = resp.getWriter();
-        writer.println("Файл " + file.getName() + " загружен" + " ID: " + savedFile.getId());
+        writer.println(json);
+        writer.close();
     }
 
-
-       /* log("пришел запрос на загрузку файла ");
-        File filePath = new File("src/main/resources/files");
-        if (!filePath.exists()) {
-            filePath.mkdirs();
-        }
-        String name = UUID.randomUUID().toString();
-        File file = new File(filePath, name);
-        try (ServletInputStream inputStream = req.getInputStream();
-             FileWriter fileWriter = new FileWriter(file)) {
-            int b;
-            while ((b = inputStream.read()) != -1) {
-                fileWriter.write(b);
-            }
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
-        UFile savedFile = fileService.addFile(file, req);
-        PrintWriter writer = resp.getWriter();
-        writer.println("Файл " + file.getName() + " загружен" + " ID: " + savedFile.getId());
-*/
-
-
-
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String collect = reader.lines().collect(Collectors.joining());
+        FileDTO fileDTO = gson.fromJson(collect, FileDTO.class);
+        FileDTO updatedFile = fileService.updateFile(fileDTO, request);
+        String json = gson.toJson(updatedFile);
         PrintWriter writer = response.getWriter();
-        String requestURI = request.getRequestURI();
-        String substring = requestURI.substring(requestURI.lastIndexOf("/") + 1);
-        UFile uFile = new UFile();
-        String collect;
-        Gson gson = new Gson();
-        if (!substring.isEmpty()) {
-            int id = Integer.parseInt(substring);
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(request.getInputStream()))) {
-                collect = bufferedReader.lines().collect(Collectors.joining());
-                uFile = gson.fromJson(collect, UFile.class);
-                uFile.setId(id);
-            }
-        } else {
-            writer.println("Укажите File ID для изменения ");
-        }
-        UFile updatedFile = fileService.updateFile(uFile, request);
-        writer.println(updatedFile);
-
+        writer.println(json);
+        writer.close();
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        PrintWriter writer = response.getWriter();
-        response.setContentType("text/plain");
-        response.setCharacterEncoding("UTF-8");
-        String requestURI = request.getRequestURI();
-        String substring = requestURI.substring(requestURI.lastIndexOf("/") + 1);
-        int id = Integer.parseInt(substring);
-        UFile uFile = fileService.getFile(id);
-        String filePath = uFile.getFilePath();
-        File file = new File(filePath);
-        boolean isDelete = file.delete();
-        if (isDelete) {
-            fileService.deleteFile(uFile, request);
-            writer.println("Файл успешно удален");
-        } else {
-            writer.println("Не удалось удалить файл, проверьте правильность вводимых данных");
-        }
 
-
-    }
 }
